@@ -1,3 +1,6 @@
+import { Discovery } from "./pages/Discovery";
+import { Profile } from "./pages/PublicProfile";
+import { RequestDialog } from "./components/RequestDialog";
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
@@ -5,178 +8,314 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
-  useNavigate,
   useParams,
 } from "react-router-dom";
-import { ArrowLeft, Menu, X } from "lucide-react";
+import {
+  Compass,
+  Bookmark,
+  UserRound,
+  X,
+  BriefcaseBusiness,
+  Menu,
+} from "lucide-react";
 import Brand from "./components/Brand";
-import Placeholder from "./components/Placeholder";
-import Overview from "./pages/Overview";
+import { people } from "./data/people";
 import { navigation } from "./data/navigation";
+import "./social.css";
 
-function Workspace() {
-  const { role, page = "overview" } = useParams();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const mainRef = useRef(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const validRole = role === "creator" || role === "business";
-  const links = navigation(role);
-  const active = links.find((item) => item.path === page);
-  useEffect(() => {
-    setMenuOpen(false);
-    document.title = `${active?.label || "Page not found"} | Money Machine`;
-  }, [location.pathname, active?.label]);
-  if (!validRole || !active) return <NotFound />;
-  function changeRole(next) {
-    const nextPage = navigation(next).some((item) => item.path === page)
-      ? page
-      : "overview";
-    navigate(`/${next}/${nextPage}`);
+function readLocal(key, fallback) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(key));
+    return Array.isArray(stored) ? stored : fallback;
+  } catch {
+    return fallback;
   }
+}
+function useLocal(key, initial) {
+  const [value, setValue] = useState(() => readLocal(key, initial));
+  const [error, setError] = useState("");
+  function update(next) {
+    setValue(next);
+    try {
+      localStorage.setItem(key, JSON.stringify(next));
+      setError("");
+    } catch {
+      setError(
+        "Browser storage is unavailable. Your changes last only until this page reloads.",
+      );
+    }
+  }
+  return [value, update, error];
+}
+function SocialApp() {
+  const { role = "creator", page = "discover", id } = useParams();
+  const [more, setMore] = useState(false);
+  const [saved, setSaved, saveError] = useLocal(`mm-saved-${role}`, []);
+  const [requests, setRequests, requestError] = useLocal(
+    `mm-requests-${role}`,
+    [],
+  );
+  const [target, setTarget] = useState(null);
+  const [notice, setNotice] = useState("");
+  const mainRef = useRef(null);
+  const isBusiness = role === "business";
+  useEffect(() => {
+    setMore(false);
+    setNotice("");
+    document.title = `${id ? "Profile" : page === "discover" ? "Discover people" : page} | Money Machine`;
+  }, [role, page, id]);
+  if (!["creator", "business"].includes(role)) return <Missing />;
+  const base = `/${role}`;
+  const person = people.find((p) => p.id === id);
+  function toggleSave(personId) {
+    setSaved(
+      saved.includes(personId)
+        ? saved.filter((x) => x !== personId)
+        : [...saved, personId],
+    );
+  }
+  function submitRequest(message) {
+    const next = {
+      id: Date.now(),
+      personId: target.id,
+      message,
+      status: "Draft",
+      kind: isBusiness ? "Invitation" : "Application",
+    };
+    setRequests([...requests, next]);
+    setTarget(null);
+    setNotice(`${next.kind} saved as a local demo draft. Nothing was sent.`);
+  }
+  const module = navigation(role).find((item) => item.path === page);
   return (
-    <div className="app-shell">
+    <div className="social-app">
       <a
         className="skip-link"
-        href="#main-content"
-        onClick={(event) => {
-          event.preventDefault();
+        href="#social-main"
+        onClick={(e) => {
+          e.preventDefault();
           mainRef.current?.focus();
         }}
       >
         Skip to content
       </a>
-      <aside className="sidebar">
-        <Link to={`/${role}/overview`} aria-label="Money Machine overview">
+      <header className="social-header">
+        <Link to={`${base}/discover`} aria-label="Money Machine home">
           <Brand />
         </Link>
-        <p className="sidebar-label">WORKSPACE</p>
-        <nav aria-label="Main navigation">
-          {links.map(({ path, label, icon: Icon }, i) => (
-            <NavLink
-              className={i === links.length - 3 ? "nav-separated" : ""}
-              key={path}
-              to={`/${role}/${path}`}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+        <nav aria-label="Primary navigation">
+          <NavLink to={`${base}/discover`}>
+            <Compass size={20} />
+            <span>Discover</span>
+          </NavLink>
+          <NavLink to={`${base}/saved`}>
+            <Bookmark size={20} />
+            <span>Saved</span>
+          </NavLink>
+          <NavLink to={`${base}/requests`}>
+            <BriefcaseBusiness size={20} />
+            <span>My collaborations</span>
+          </NavLink>
         </nav>
-        <div className="sidebar-footer">
-          <span className="avatar">{role === "creator" ? "CR" : "BO"}</span>
-          <div>
-            {role === "creator" ? "Creator workspace" : "Business workspace"}
-            <small>Demo preview</small>
-          </div>
-          <span className="online-dot" />
-        </div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <div className="mobile-brand">
-            <Brand />
-          </div>
-          <div className="breadcrumb">
-            Workspace <span>/</span> <strong>{active.label}</strong>
-          </div>
-          <div className="header-actions">
-            <label className="role-picker">
-              <span>Preview as</span>
-              <select
-                aria-label="Preview workspace role"
-                value={role}
-                onChange={(e) => changeRole(e.target.value)}
-              >
-                <option value="creator">Creator</option>
-                <option value="business">Business owner</option>
-              </select>
-            </label>
-            <button
-              className="icon-button mobile-toggle"
-              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-navigation"
-              onClick={() => setMenuOpen(!menuOpen)}
+        <div className="social-tools">
+          <label>
+            <span className="sr-only">Preview as</span>
+            <select
+              aria-label="Preview role"
+              value={role}
+              onChange={(e) => {
+                window.location.hash = `/${e.target.value}/discover`;
+              }}
             >
-              {menuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-        </header>
-        {menuOpen && (
-          <nav
-            id="mobile-navigation"
-            className="mobile-navigation"
-            aria-label="Mobile navigation"
+              <option value="creator">Creator</option>
+              <option value="business">Business</option>
+            </select>
+          </label>
+          <button
+            className="icon-button"
+            onClick={() => setMore(!more)}
+            aria-label="More navigation"
+            aria-expanded={more}
+            aria-controls="more-nav"
           >
-            {links.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={`/${role}/${path}`}>
-                <Icon size={18} />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
-        )}
-        <div className="demo-strip">
-          <span className="demo-dot" />
-          <strong>Prototype workspace</strong>
-          <span>Navigation preview · No real accounts or payments</span>
+            {more ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-        <main
-          ref={mainRef}
-          id="main-content"
-          tabIndex="-1"
-          key={location.pathname}
-        >
-          {page === "overview" ? (
-            <Overview role={role} />
-          ) : (
-            <Placeholder page={active} role={role} />
-          )}
-          <footer className="page-footer">
-            <span>Money Machine</span>
-            <span>Built for better collaborations.</span>
-          </footer>
-        </main>
-        <nav className="bottom-nav" aria-label="Quick navigation">
-          {links
-            .filter((item) =>
-              ["overview", "discover", "collaborations", "profile"].includes(
-                item.path,
-              ),
+      </header>
+      {more && (
+        <nav id="more-nav" className="more-nav" aria-label="More navigation">
+          {navigation(role)
+            .filter(
+              (x) => !["overview", "discover", "shortlists"].includes(x.path),
             )
-            .map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={`/${role}/${path}`}>
-                <Icon size={19} />
-                <span>{path === "discover" ? "Discover" : label}</span>
-              </NavLink>
+            .map((x) => (
+              <Link key={x.path} to={`${base}/${x.path}`}>
+                {x.label}
+              </Link>
             ))}
         </nav>
+      )}
+      <div className="social-demo">
+        Interactive prototype · Fictional profiles & sample work · Nothing is
+        sent or paid
       </div>
+      <main
+        id="social-main"
+        className="social-main"
+        ref={mainRef}
+        tabIndex="-1"
+      >
+        {notice && (
+          <p className="notice" role="status">
+            {notice}
+          </p>
+        )}
+        {(saveError || requestError) && (
+          <p role="alert">{saveError || requestError}</p>
+        )}
+        {id ? (
+          person ? (
+            <Profile
+              person={person}
+              role={role}
+              saved={saved.includes(person.id)}
+              onSave={() => toggleSave(person.id)}
+              onRequest={() => setTarget(person)}
+            />
+          ) : (
+            <Missing />
+          )
+        ) : page === "discover" || page === "saved" ? (
+          <Discovery
+            role={role}
+            saved={saved}
+            savedOnly={page === "saved"}
+            onSave={toggleSave}
+          />
+        ) : page === "requests" ? (
+          <section>
+            <p className="eyebrow">YOUR NEXT CHAPTER</p>
+            <h1>Conversations start with an idea.</h1>
+            <p className="muted">
+              Local demo applications and invitations. These drafts have not
+              been sent.
+            </p>
+            {requests.length ? (
+              requests.map((r) => (
+                <article className="request-card" key={r.id}>
+                  <div>
+                    <span className="pill">
+                      {r.kind} · {r.status}
+                    </span>
+                    <h2>{people.find((p) => p.id === r.personId)?.name}</h2>
+                    <p>{r.message}</p>
+                  </div>
+                  <button
+                    className="text-button"
+                    onClick={() =>
+                      setRequests(requests.filter((x) => x.id !== r.id))
+                    }
+                  >
+                    Delete draft
+                  </button>
+                </article>
+              ))
+            ) : (
+              <div className="social-empty">
+                <BriefcaseBusiness size={32} />
+                <h2>Your next collaboration starts here.</h2>
+                <p>
+                  Find a profile and{" "}
+                  {isBusiness
+                    ? "invite a creator"
+                    : "apply to a business opportunity"}{" "}
+                  to save your first draft.
+                </p>
+                <Link className="button" to={`${base}/discover`}>
+                  Discover people
+                </Link>
+              </div>
+            )}
+          </section>
+        ) : module ? (
+          <section className="social-empty">
+            <module.icon size={34} />
+            <h1>{module.label}</h1>
+            <p>{module.description}</p>
+            <span className="pill">Planned feature</span>
+            <p>This secondary tool will be added in a later step.</p>
+            <Link className="button secondary" to={`${base}/discover`}>
+              Back to discovery
+            </Link>
+          </section>
+        ) : (
+          <Missing />
+        )}
+        <footer className="social-footer">
+          <Brand />
+          <span>Find your people. Make something meaningful.</span>
+          <small>
+            Demo profiles are shown as opted in. Real public profiles will
+            require consent.
+          </small>
+        </footer>
+      </main>
+      <nav className="social-bottom" aria-label="Mobile navigation">
+        <NavLink to={`${base}/discover`}>
+          <Compass size={22} />
+          Discover
+        </NavLink>
+        <NavLink to={`${base}/saved`}>
+          <Bookmark size={22} />
+          Saved
+        </NavLink>
+        <NavLink to={`${base}/requests`}>
+          <BriefcaseBusiness size={22} />
+          Collaborations
+        </NavLink>
+        <NavLink to={`${base}/profile`}>
+          <UserRound size={22} />
+          Profile
+        </NavLink>
+      </nav>
+      {target && (
+        <RequestDialog
+          person={target}
+          role={role}
+          onClose={() => setTarget(null)}
+          onSubmit={submitRequest}
+        />
+      )}
     </div>
   );
 }
-function NotFound() {
+function Missing() {
   return (
-    <main className="not-found">
-      <Brand />
-      <p className="eyebrow">404 · PAGE NOT FOUND</p>
-      <h1>Let’s get you back on track.</h1>
-      <p>This page doesn’t exist in the prototype.</p>
-      <Link className="button" to="/creator/overview">
-        <ArrowLeft size={18} />
-        Go to workspace
+    <section className="social-empty">
+      <h1>We couldn’t find that page.</h1>
+      <Link className="button" to="/creator/discover">
+        Discover people
       </Link>
-    </main>
+    </section>
   );
 }
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/creator/overview" replace />} />
-      <Route path="/:role/:page" element={<Workspace />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="/" element={<Navigate to="/creator/discover" replace />} />
+      <Route path="/:role/overview" element={<OldOverview />} />
+      <Route path="/:role/people/:id" element={<RoleApp />} />
+      <Route path="/:role/:page" element={<RoleApp />} />
+      <Route path="*" element={<Missing />} />
     </Routes>
   );
+}
+function OldOverview() {
+  const { role } = useParams();
+  return <Navigate to={`/${role}/discover`} replace />;
+}
+
+function RoleApp() {
+  const { role } = useParams();
+  return <SocialApp key={role} />;
 }
