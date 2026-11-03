@@ -7,7 +7,7 @@ export default function Brand() {
       </span>
       <span>
         money<span className="brand-light">machine</span>
-        <small>THE COLLABORATION WORKSPACE</small>
+        <small>THE CREATOR & BUSINESS NETWORK</small>
       </span>
     </span>
   );
