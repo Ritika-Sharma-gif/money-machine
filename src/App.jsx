@@ -9,6 +9,9 @@ import {
   SimplePage,
 } from "./pages/Experience";
 import { Discovery } from "./pages/Discovery";
+import SignIn from "./pages/SignIn";
+import { LiveDirectory } from "./pages/Live";
+import { useAuth, homeFor } from "./AuthContext";
 import { Profile } from "./pages/PublicProfile";
 import { RequestDialog } from "./components/RequestDialog";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +21,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useNavigate,
   useParams,
 } from "react-router-dom";
 import {
@@ -59,6 +63,10 @@ function useLocal(key, initial) {
 }
 function SocialApp() {
   const { role = "creator", page = "discover", id } = useParams();
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const liveBusiness =
+    auth.status === "in" && ["business", "agency"].includes(auth.me?.user.accountType);
   const [more, setMore] = useState(false);
   const [saved, setSaved, saveError] = useLocal(`mm-saved-${role}`, []);
   const [requests, setRequests, requestError] = useLocal(
@@ -134,7 +142,7 @@ function SocialApp() {
               aria-label="Preview role"
               value={role}
               onChange={(e) => {
-                window.location.hash = `/${e.target.value}/discover`;
+                navigate(`/${e.target.value}/discover`);
               }}
             >
               <option value="creator">Creator</option>
@@ -195,6 +203,8 @@ function SocialApp() {
           ) : (
             <Missing />
           )
+        ) : page === "discover" && liveBusiness ? (
+          <LiveDirectory />
         ) : page === "discover" || page === "saved" ? (
           <Discovery
             role={role}
@@ -315,6 +325,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/signin" element={<SignIn />} />
       <Route path="/:role/overview" element={<OldOverview />} />
       <Route path="/:role/people/:id" element={<RoleApp />} />
       <Route path="/:role/:page" element={<RoleApp />} />
@@ -329,7 +340,15 @@ function OldOverview() {
 
 function RoleApp() {
   const { role, page } = useParams();
+  const auth = useAuth();
   if (!["creator", "business"].includes(role)) return <Missing />;
+  if (auth.status === "loading") return <div aria-busy="true" />;
+  if (auth.status === "in") {
+    // Signed-in people only ever see their own workspace.
+    if (!auth.me?.user.accountType) return <Navigate to="/signin" replace />;
+    const mine = auth.me.user.accountType === "creator" ? "creator" : "business";
+    if (role !== mine) return <Navigate to={homeFor(auth.me)} replace />;
+  }
   const pages = {
     dashboard: <Dashboard />,
     collaborations: <Collaborations />,

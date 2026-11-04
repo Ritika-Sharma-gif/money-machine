@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useParams } from "react-router-dom";
 import Brand from "../components/Brand";
+import { Heading, Panel } from "../components/Layout";
+import { useAuth, homeFor } from "../AuthContext";
+import { LiveProfile, LiveSettings } from "./Live";
 import "../experience.css";
 
 const money = (n) =>
@@ -443,6 +446,7 @@ function RoleCard({ to, className = "", label, title, text, cta, delay }) {
 }
 
 export function Landing() {
+  const auth = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const progress = useRef(null);
   const visual = useRef(null);
@@ -506,6 +510,14 @@ export function Landing() {
           <Link to="/creator/dashboard">For creators</Link>
           <Link to="/business/dashboard">For businesses</Link>
         </nav>
+        {auth.enabled && (
+          <Link
+            className="mm-quiet mm-signin-link"
+            to={auth.status === "in" && auth.me?.user.accountType ? homeFor(auth.me) : "/signin"}
+          >
+            {auth.status === "in" && auth.me?.user.accountType ? "Open workspace" : "Sign in"}
+          </Link>
+        )}
         <a
           className="mm-button small"
           href="#choose-role"
@@ -711,6 +723,8 @@ const navItems = [
 ];
 export function Workspace({ children }) {
   const { role = "business", page = "dashboard" } = useParams();
+  const auth = useAuth();
+  const live = auth.status === "in";
   const [open, setOpen] = useState(false);
   const location = useLocation();
   useEffect(() => {
@@ -735,6 +749,7 @@ export function Workspace({ children }) {
         <Link to="/" aria-label="Money Machine home">
           <Brand />
         </Link>
+        {!live && (
         <div className="mm-role-toggle">
           <Link className={!business ? "active" : ""} to="/creator/dashboard">
             Creator
@@ -743,6 +758,7 @@ export function Workspace({ children }) {
             Business
           </Link>
         </div>
+        )}
         <span className="mm-nav-label">YOUR WORKSPACE</span>
         <nav aria-label="Workspace navigation">
           {navItems
@@ -786,11 +802,24 @@ export function Workspace({ children }) {
             {navItems.find((x) => x[0] === page)?.[1] || "Profile"}
           </span>
           <div className="mm-account">
-            <span className="mm-avatar">{business ? "SF" : "MK"}</span>
+            <span className="mm-avatar">
+              {live
+                ? auth.me.user.displayName.slice(0, 2).toUpperCase()
+                : business ? "SF" : "MK"}
+            </span>
             <div>
-              <strong>{business ? "Studio Fern" : "Maya Kapoor"}</strong>
-              <small>{business ? "Business" : "Creator"} demo account</small>
+              <strong>{live ? auth.me.user.displayName : business ? "Studio Fern" : "Maya Kapoor"}</strong>
+              <small>
+                {live
+                  ? `${auth.me.user.accountType[0].toUpperCase()}${auth.me.user.accountType.slice(1)} account`
+                  : `${business ? "Business" : "Creator"} demo account`}
+              </small>
             </div>
+            {live && (
+              <button className="mm-quiet" onClick={() => auth.signOut()}>
+                Sign out
+              </button>
+            )}
           </div>
         </header>
         <div className="mm-demo-note">
@@ -806,32 +835,6 @@ export function Workspace({ children }) {
         </main>
       </div>
     </div>
-  );
-}
-function Heading({ eyebrow, title, description, action }) {
-  return (
-    <div className="mm-heading">
-      <div>
-        <span className="mm-kicker">{eyebrow}</span>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </div>
-      {action}
-    </div>
-  );
-}
-function Panel({ title, subtitle, children, action }) {
-  return (
-    <section className="mm-panel">
-      <div className="mm-panel-heading">
-        <div>
-          <h2>{title}</h2>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
   );
 }
 function DealDetail({ deal, onClose }) {
@@ -863,6 +866,7 @@ function DealDetail({ deal, onClose }) {
 }
 export function Dashboard() {
   const { role } = useParams();
+  const auth = useAuth();
   const business = role === "business";
   const rows = business ? deals : [deals[0]];
   const [selected, setSelected] = useState(null);
@@ -870,7 +874,7 @@ export function Dashboard() {
     <>
       <Heading
         eyebrow="LET’S MAKE GOOD WORK HAPPEN"
-        title={`Welcome back, ${business ? "Studio Fern" : "Maya"}.`}
+        title={`Welcome${auth.status === "in" ? "" : " back"}, ${auth.status === "in" ? auth.me.user.displayName : business ? "Studio Fern" : "Maya"}.`}
         description="Your people, your projects, and what comes next."
         action={
           <Link
@@ -1666,7 +1670,10 @@ export function SimplePage() {
   const { role, page } = useParams();
   const [note, setNote] = useState("");
   const business = role === "business";
-  if (page === "settings") return <SettingsPage business={business} />;
+  const auth = useAuth();
+  if (page === "settings")
+    return auth.status === "in" ? <LiveSettings /> : <SettingsPage business={business} />;
+  if (page === "profile" && auth.status === "in") return <LiveProfile />;
   if (page === "profile")
     return (
       <>
