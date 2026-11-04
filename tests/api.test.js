@@ -105,3 +105,59 @@ test("route: 405, error mapping, no leaks, no-store", async () => {
   r = fakeRes(); await h({ method: "PUT" }, r); console.error = quiet;
   assert.equal(r.statusCode, 500); assert.ok(!r.body.includes("hunter2"));
 });
+
+// ---- auth proxy ----
+import handler, { buildTarget } from "../api/neon-auth.js";
+const BASE = "https://auth.example.test/db/auth";
+test("proxy: only safe paths reach the fixed base URL", () => {
+  assert.equal(buildTarget(BASE, "sign-up/email", "path=sign-up%2Femail").href, `${BASE}/sign-up/email`);
+  assert.equal(buildTarget(BASE, "get-session", "path=get-session&x=1").href, `${BASE}/get-session?x=1`);
+  for (const bad of ["../admin", "a/../b", "//evil.test", "a b", "http://evil.test", "a@evil.test", "a?b"])
+    assert.equal(buildTarget(BASE, bad, ""), null, bad);
+});
+test("proxy: forwards JSON, cookies and origin; returns jwt header and set-cookie", async () => {
+  process.env.NEON_AUTH_BASE_URL = BASE;
+  let seen;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    seen = { url: String(url), init };
+    const h = new Headers({ "content-type": "application/json", "set-auth-jwt": "a.b.c" });
+    h.append("set-cookie", "s=1; Path=/; HttpOnly");
+    h.append("set-cookie", "t=2; Path=/");
+    return new Response('{"ok":true}', { status: 200, headers: h });
+  };
+  const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end(b) { this.body = b; } };
+  await handler({
+    method: "POST", url: "/api/neon-auth?path=sign-up%2Femail",
+    headers: { "content-type": "application/json", origin: "https://site.test", cookie: "c=1", authorization: "Bearer secret", "x-forwarded-for": "1.1.1.1" },
+    body: { email: "a@b.test", password: "pw" },
+  }, res);
+  globalThis.fetch = realFetch;
+  assert.equal(seen.url, `${BASE}/sign-up/email`);
+  assert.equal(seen.init.headers.origin, "https://site.test");
+  assert.equal(seen.init.headers.cookie, "c=1");
+  assert.equal(seen.init.headers.authorization, undefined);      // not forwarded
+  assert.equal(seen.init.headers["x-forwarded-for"], undefined); // not forwarded
+  assert.equal(seen.init.body, '{"email":"a@b.test","password":"pw"}');
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers["set-auth-jwt"], "a.b.c");
+  assert.deepEqual(res.headers["Set-Cookie"], ["s=1; Path=/; HttpOnly", "t=2; Path=/"]);
+});
+test("proxy: upstream errors pass through and the password is never logged", async () => {
+  process.env.NEON_AUTH_BASE_URL = BASE;
+  const realFetch = globalThis.fetch, realErr = console.error, logged = [];
+  console.error = (...a) => logged.push(a.join(" "));
+  globalThis.fetch = async () => new Response('{"message":"Invalid"}', { status: 400, headers: { "content-type": "application/json" } });
+  const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end(b) { this.body = b; } };
+  await handler({ method: "POST", url: "/api/neon-auth?path=sign-up%2Femail", headers: {}, body: { password: "supersecret-pw" } }, res);
+  globalThis.fetch = realFetch; console.error = realErr;
+  assert.equal(res.statusCode, 400);
+  assert.ok(logged.join("\n").includes("neon_auth_upstream 400"));
+  assert.ok(!logged.join("\n").includes("supersecret-pw"));
+});
+test("proxy: rejects other methods and bad paths", async () => {
+  process.env.NEON_AUTH_BASE_URL = BASE;
+  const mk = () => ({ headers: {}, setHeader() {}, end(b) { this.body = b; } });
+  let r = mk(); await handler({ method: "DELETE", url: "/api/neon-auth?path=x", headers: {} }, r); assert.equal(r.statusCode, 405);
+  r = mk(); await handler({ method: "GET", url: "/api/neon-auth?path=..%2Fx", headers: {} }, r); assert.equal(r.statusCode, 400);
+});
