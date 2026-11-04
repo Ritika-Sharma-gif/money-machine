@@ -300,11 +300,13 @@ function SocialApp() {
   );
 }
 function Missing() {
+  const { role } = useParams();
+  const home = role === "business" ? "business" : "creator";
   return (
     <section className="social-empty">
       <h1>We couldn’t find that page.</h1>
-      <Link className="button" to="/creator/discover">
-        Discover people
+      <Link className="button" to={`/${home}/dashboard`}>
+        Back to your overview
       </Link>
     </section>
   );

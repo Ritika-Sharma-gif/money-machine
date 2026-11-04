@@ -137,6 +137,157 @@ export function InstallButton() {
     </>
   );
 }
+const steps = [
+  {
+    n: "01",
+    label: "DISCOVER",
+    title: "Find your people.",
+    text: "Search by name, interest, or city. Save the profiles you like.",
+    cta: "Browse profiles",
+    to: "/creator/discover",
+    art: "discover",
+  },
+  {
+    n: "02",
+    label: "COLLABORATE",
+    title: "Get on the same page.",
+    text: "Keep your terms, content, and next steps together.",
+    cta: "See a sample agreement",
+    to: "/business/agreements",
+    art: "agree",
+  },
+  {
+    n: "03",
+    label: "KEEP TRACK",
+    title: "Know where you stand.",
+    text: "See your records, affiliate activity, and achievements.",
+    cta: "See sample records",
+    to: "/creator/finances",
+    art: "track",
+  },
+];
+
+function StepArt({ kind }) {
+  if (kind === "discover")
+    return (
+      <svg viewBox="0 0 120 80" aria-hidden="true" className="mm-art">
+        <circle className="a-ring" cx="44" cy="40" r="22" />
+        <line className="a-handle" x1="60" y1="56" x2="76" y2="70" />
+        <circle className="a-dot d1" cx="92" cy="22" r="5" />
+        <circle className="a-dot d2" cx="104" cy="44" r="4" />
+        <circle className="a-dot d3" cx="88" cy="58" r="3" />
+      </svg>
+    );
+  if (kind === "agree")
+    return (
+      <svg viewBox="0 0 120 80" aria-hidden="true" className="mm-art">
+        <rect className="a-doc" x="30" y="10" width="52" height="62" rx="6" />
+        <line className="a-line l1" x1="40" y1="26" x2="72" y2="26" />
+        <line className="a-line l2" x1="40" y1="38" x2="72" y2="38" />
+        <line className="a-line l3" x1="40" y1="50" x2="58" y2="50" />
+        <path className="a-check" d="M70 56l6 6 12-14" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 120 80" aria-hidden="true" className="mm-art">
+      <rect className="a-bar b1" x="26" y="42" width="14" height="28" rx="3" />
+      <rect className="a-bar b2" x="50" y="28" width="14" height="42" rx="3" />
+      <rect className="a-bar b3" x="74" y="14" width="14" height="56" rx="3" />
+      <line className="a-base" x1="18" y1="72" x2="98" y2="72" />
+    </svg>
+  );
+}
+
+function HowItWorks() {
+  const ref = useRef(null);
+  const [seen, setSeen] = useState(false);
+  const [active, setActive] = useState(0);
+  const [run, setRun] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setSeen(true);
+      },
+      { threshold: 0.25 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  // Walk the highlight through the three steps once the section is visible,
+  // then stop so the section stays calm and readable.
+  useEffect(() => {
+    if (!seen) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let i = 0;
+    setActive(0);
+    const t = setInterval(() => {
+      i += 1;
+      if (i > 2) return clearInterval(t);
+      setActive(i);
+    }, 1400);
+    return () => clearInterval(t);
+  }, [seen, run]);
+  return (
+    <section
+      className={`mm-steps ${seen ? "in-view" : ""}`}
+      id="how-it-works"
+      ref={ref}
+      aria-labelledby="how-title"
+    >
+      <div className="mm-steps-head">
+        <span className="mm-kicker">HOW IT WORKS</span>
+        <h2 id="how-title">Three simple steps.</h2>
+        <button
+          type="button"
+          className="mm-quiet"
+          onClick={() => {
+            setSeen(false);
+            setActive(0);
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                setSeen(true);
+                setRun((r) => r + 1);
+              }),
+            );
+          }}
+        >
+          Replay ↻
+        </button>
+      </div>
+      <div className="mm-steps-grid">
+        <span className="mm-steps-line" aria-hidden="true">
+          <span />
+        </span>
+        {steps.map((step, i) => (
+          <article
+            key={step.n}
+            className={`mm-step ${active === i ? "active" : ""}`}
+            style={{ "--i": i }}
+            onMouseEnter={() => setActive(i)}
+            onFocus={() => setActive(i)}
+          >
+            <div className="mm-step-top">
+              <span className="mm-step-badge">{step.n}</span>
+              <StepArt kind={step.art} />
+            </div>
+            <span className="mm-step-label">{step.label}</span>
+            <h3>{step.title}</h3>
+            <p>{step.text}</p>
+            <Link className="mm-step-link" to={step.to}>
+              {step.cta} <span aria-hidden="true">↗</span>
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Landing() {
   useEffect(() => {
     document.title = "Money Machine — Good work starts with a connection";
@@ -234,25 +385,7 @@ export function Landing() {
             <div className="mm-visual-tag">Create. Connect. Collaborate.</div>
           </div>
         </section>
-        <section className="mm-path" id="how-it-works">
-          <div>
-            <span>01 / DISCOVER</span>
-            <h2>Find your people.</h2>
-            <p>
-              Search by name, interest, or city. Save the profiles you like.
-            </p>
-          </div>
-          <div>
-            <span>02 / COLLABORATE</span>
-            <h2>Get on the same page.</h2>
-            <p>Keep your terms, content, and next steps together.</p>
-          </div>
-          <div>
-            <span>03 / KEEP TRACK</span>
-            <h2>Know where you stand.</h2>
-            <p>See your records, affiliate activity, and achievements.</p>
-          </div>
-        </section>
+        <HowItWorks />
         <section className="mm-role-section" id="choose-role">
           <div>
             <span className="mm-kicker">A PLACE FOR BOTH SIDES</span>
@@ -799,12 +932,20 @@ export function FinancialRecords() {
           <p>
             Payment:{" "}
             {detail.paid
-              ? `PAY-DEMO-${detail.id} · ${money(detail.paid)} · Manual entry, unverified`
+              ? `PAY-DEMO-${detail.id} · ${money(detail.paid)}`
               : "No payment recorded"}
           </p>
-          <p>
-            All sources are fictional UI examples. No bank or payment-provider
-            verification.
+          <div className="mm-record-line">
+            <span>Data source</span>
+            <strong>
+              {detail.paid ? "Self-reported" : "No payment to source"}
+            </strong>
+          </div>
+          <p className="mm-caption">
+            Data sources are self-reported, confirmed by the other side, or
+            confirmed by a payment provider. Self-reported entries are never
+            counted as verified payments. In this demo every entry is
+            self-reported; no other side or payment provider is connected.
           </p>
         </Modal>
       )}
@@ -1075,6 +1216,8 @@ export function Badges() {
             "Profile ready",
             "Name, introduction, and interests added.",
             true,
+            "Account check",
+            "You completed your demo profile.",
           ],
           [
             "02",
@@ -1083,21 +1226,29 @@ export function Badges() {
               ? "Both sides agreed on a sample collaboration."
               : "A first piece of sample content was delivered.",
             true,
+            "Working behaviour",
+            business
+              ? "Based on sample agreement AGR-DEMO-01."
+              : "Based on sample delivery in AGR-DEMO-01.",
           ],
           [
             "03",
             "Working together again",
             "Complete a second collaboration with the same partner.",
             false,
+            "Milestone",
+            "Needs two completed collaborations with one partner.",
           ],
-        ].map(([n, title, desc, earned]) => (
+        ].map(([n, title, desc, earned, kind, evidence]) => (
           <article
             className={`mm-badge-card ${earned ? "" : "locked"}`}
             key={n}
           >
             <span className="mm-badge-seal">{n}</span>
+            <span className="mm-badge-class">{kind}</span>
             <h2>{title}</h2>
             <p>{desc}</p>
+            <small className="mm-badge-evidence">Evidence: {evidence}</small>
             <span className="mm-status">
               {earned ? "Earned in demo" : "Not earned yet"}
             </span>
@@ -1106,35 +1257,150 @@ export function Badges() {
       </div>
       <p className="mm-caption">
         Badges do not certify identity, content quality, income, or payment
-        reliability.
+        reliability. Subscriptions never earn a badge, and earnings are never
+        shown as a statistic.
       </p>
     </>
   );
 }
+const defaultSettings = {
+  discoverable: false,
+  showcase: false,
+  notifyOffers: true,
+  notifyMessages: true,
+  notifyReminders: false,
+  blocked: [],
+};
+
+function SettingsPage({ business }) {
+  const key = `mm-settings-${business ? "business" : "creator"}`;
+  const [settings, setSettings] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(key));
+      return raw && typeof raw === "object"
+        ? { ...defaultSettings, ...raw }
+        : defaultSettings;
+    } catch {
+      return defaultSettings;
+    }
+  });
+  const [note, setNote] = useState("");
+  function change(patch, message) {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    try {
+      localStorage.setItem(key, JSON.stringify(next));
+      setNote(message);
+    } catch {
+      setNote("Browser storage is unavailable. This lasts until you reload.");
+    }
+  }
+  const toggles = [
+    ...(business
+      ? []
+      : [
+          [
+            "discoverable",
+            "Let businesses find me",
+            "Off by default. Turn it off at any time and your profile leaves search straight away.",
+          ],
+          [
+            "showcase",
+            "Show my public showcase page",
+            "Only the work samples you choose. Earnings are never shown.",
+          ],
+        ]),
+    ["notifyOffers", "Offers and agreements", "Tell me when terms change."],
+    ["notifyMessages", "Messages", "Tell me when someone writes to me."],
+    ["notifyReminders", "Deadline reminders", "A nudge before work is due."],
+  ];
+  const blockable = ["Slow Coffee Co.", "Daily Form", "Arjun Mehta"];
+  return (
+    <>
+      <Heading
+        eyebrow="MAKE YOURSELF AT HOME"
+        title="Settings"
+        description="Choose who can find you, what you hear about, and who can contact you."
+      />
+      {note && (
+        <p role="status" className="mm-notice">
+          {note} Saved on this browser only.
+        </p>
+      )}
+      <Panel
+        title="Privacy and notifications"
+        subtitle="Every switch works right away."
+      >
+        {toggles.map(([id, label, help]) => (
+          <label className="mm-switch-row" key={id}>
+            <span>
+              <strong>{label}</strong>
+              <small>{help}</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={settings[id]}
+              onChange={(e) =>
+                change(
+                  { [id]: e.target.checked },
+                  `${label} turned ${e.target.checked ? "on" : "off"}.`,
+                )
+              }
+            />
+          </label>
+        ))}
+      </Panel>
+      <Panel
+        title="Blocked accounts"
+        subtitle="Blocking stops messages, offers and feed visibility."
+      >
+        {blockable.map((name) => {
+          const isBlocked = settings.blocked.includes(name);
+          return (
+            <div className="mm-record-line" key={name}>
+              <span>{name}</span>
+              <button
+                className="mm-quiet"
+                onClick={() =>
+                  change(
+                    {
+                      blocked: isBlocked
+                        ? settings.blocked.filter((x) => x !== name)
+                        : [...settings.blocked, name],
+                    },
+                    `${name} ${isBlocked ? "unblocked" : "blocked"}.`,
+                  )
+                }
+              >
+                {isBlocked ? "Unblock" : "Block"}
+              </button>
+            </div>
+          );
+        })}
+        <p className="mm-caption">
+          Demo only. No real accounts are affected and nothing is sent.
+        </p>
+      </Panel>
+      <Panel title="Use Money Machine on your phone">
+        <p>Add this website to your home screen for quick access.</p>
+        <InstallButton />
+      </Panel>
+      <Panel title="Motion & accessibility">
+        <p>
+          Animations follow your device’s reduced-motion setting. All actions
+          work with a keyboard as well as touch.
+        </p>
+      </Panel>
+    </>
+  );
+}
+
 export function SimplePage() {
   const { role, page } = useParams();
   const [note, setNote] = useState("");
   const business = role === "business";
-  if (page === "settings")
-    return (
-      <>
-        <Heading
-          eyebrow="MAKE YOURSELF AT HOME"
-          title="Settings"
-          description="A few useful things for your workspace."
-        />
-        <Panel title="Use Money Machine on your phone">
-          <p>Add this website to your home screen for quick access.</p>
-          <InstallButton />
-        </Panel>
-        <Panel title="Motion & accessibility">
-          <p>
-            Animations follow your device’s reduced-motion setting. All actions
-            work with a keyboard as well as touch.
-          </p>
-        </Panel>
-      </>
-    );
+  if (page === "settings") return <SettingsPage business={business} />;
   if (page === "profile")
     return (
       <>

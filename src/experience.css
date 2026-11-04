@@ -1495,3 +1495,339 @@ a.mm-button:hover {
 .mm-timeline p:before {
   display: none;
 }
+
+/* ---------- How it works: animated steps ---------- */
+.mm-steps {
+  max-width: 1296px;
+  margin: 10px auto 0;
+  padding: 64px 0 56px;
+  border-top: 1px solid #e2e8f0;
+  scroll-margin-top: 90px;
+}
+.mm-steps-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 20px;
+  margin-bottom: 36px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.mm-steps-head h2 {
+  flex: 1 1 100%;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -1.3px;
+  margin: 6px 0 0;
+}
+.mm-steps-head .mm-quiet {
+  margin-left: auto;
+}
+.mm-steps.in-view .mm-steps-head {
+  opacity: 1;
+  transform: none;
+}
+.mm-steps-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+.mm-steps-line {
+  position: absolute;
+  top: 46px;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mm-steps-line span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #14b8a6, #142b4a);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 2.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.4s;
+}
+.mm-steps.in-view .mm-steps-line span {
+  transform: scaleX(1);
+}
+.mm-step {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 26px 26px 24px;
+  opacity: 0;
+  transform: translateY(34px) scale(0.97);
+  transition:
+    opacity 0.7s ease calc(var(--i) * 0.2s + 0.15s),
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.2s + 0.15s),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+.mm-steps.in-view .mm-step {
+  opacity: 1;
+  transform: none;
+}
+.mm-steps.in-view .mm-step:hover,
+.mm-steps.in-view .mm-step:focus-within,
+.mm-steps.in-view .mm-step.active {
+  transform: translateY(-6px);
+  border-color: #14b8a6;
+  box-shadow: 0 18px 40px -18px #14b8a666;
+  transition-delay: 0s;
+}
+.mm-step-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.mm-step-badge {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #142b4a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  transition:
+    background 0.3s ease,
+    transform 0.3s ease;
+}
+.mm-step.active .mm-step-badge {
+  background: #14b8a6;
+  transform: scale(1.12);
+}
+.mm-art {
+  width: 120px;
+  height: 80px;
+}
+.mm-art * {
+  fill: none;
+  stroke: #142b4a;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mm-step .mm-step-label {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: #0f9488;
+  font-weight: 600;
+}
+.mm-step h3 {
+  font-size: 23px;
+  font-weight: 600;
+  margin: 10px 0 8px;
+  letter-spacing: -0.5px;
+}
+.mm-step p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #526173;
+  margin: 0 0 18px;
+}
+.mm-step-link {
+  display: inline-flex;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f766e;
+  padding: 6px 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    gap 0.25s ease,
+    border-color 0.25s ease;
+}
+.mm-step-link:hover,
+.mm-step-link:focus-visible {
+  gap: 10px;
+  border-color: currentColor;
+}
+/* illustration motion — only plays once the section is visible */
+.mm-art .a-ring,
+.mm-art .a-handle,
+.mm-art .a-doc,
+.mm-art .a-base {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.mm-steps.in-view .a-ring,
+.mm-steps.in-view .a-handle,
+.mm-steps.in-view .a-doc,
+.mm-steps.in-view .a-base {
+  animation: mm-draw 1.1s ease forwards 0.7s;
+}
+.mm-art .a-line {
+  stroke: #94a3b8;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+}
+.mm-steps.in-view .a-line {
+  animation: mm-draw 0.7s ease forwards;
+}
+.mm-steps.in-view .l1 { animation-delay: 1.2s; }
+.mm-steps.in-view .l2 { animation-delay: 1.4s; }
+.mm-steps.in-view .l3 { animation-delay: 1.6s; }
+.mm-art .a-check {
+  stroke: #14b8a6;
+  stroke-width: 3.5;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+}
+.mm-steps.in-view .a-check {
+  animation: mm-draw 0.6s ease forwards 2s;
+}
+.mm-art .a-dot {
+  fill: #14b8a6;
+  stroke: none;
+  opacity: 0;
+}
+.mm-steps.in-view .a-dot {
+  animation: mm-pop 0.5s ease forwards, mm-bob 3.2s ease-in-out infinite 2s;
+}
+.mm-steps.in-view .d1 { animation-delay: 1.2s, 2s; }
+.mm-steps.in-view .d2 { animation-delay: 1.4s, 2.3s; }
+.mm-steps.in-view .d3 { animation-delay: 1.6s, 2.6s; }
+.mm-art .a-bar {
+  fill: #14b8a6;
+  stroke: none;
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+}
+.mm-steps.in-view .a-bar {
+  animation: mm-grow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.mm-steps.in-view .b1 { animation-delay: 1s; }
+.mm-steps.in-view .b2 { animation-delay: 1.2s; }
+.mm-steps.in-view .b3 { animation-delay: 1.4s; }
+@keyframes mm-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes mm-pop {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes mm-bob {
+  50% { transform: translateY(-4px); }
+}
+@keyframes mm-grow {
+  to { transform: scaleY(1); }
+}
+@media (max-width: 860px) {
+  .mm-steps {
+    padding: 48px 0 40px;
+  }
+  .mm-steps-grid {
+    grid-template-columns: 1fr;
+  }
+  .mm-steps-line {
+    display: none;
+  }
+  .mm-steps-head h2 {
+    font-size: 28px;
+  }
+}
+/* Reduced motion: show everything at once, no movement. */
+@media (prefers-reduced-motion: reduce) {
+  .mm-steps-head,
+  .mm-step,
+  .mm-steps-line span,
+  .mm-art .a-bar {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .mm-art .a-ring,
+  .mm-art .a-handle,
+  .mm-art .a-doc,
+  .mm-art .a-base,
+  .mm-art .a-line,
+  .mm-art .a-check {
+    stroke-dashoffset: 0 !important;
+  }
+  .mm-art .a-dot {
+    opacity: 1 !important;
+  }
+}
+
+/* Settings switches, badge evidence */
+.mm-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-top: 1px solid #edf1f5;
+  cursor: pointer;
+}
+.mm-switch-row strong {
+  display: block;
+  font-size: 14px;
+}
+.mm-switch-row small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.mm-switch-row input[role="switch"] {
+  appearance: none;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 20px;
+  background: #cbd5e1;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+.mm-switch-row input[role="switch"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #0003;
+  transition: transform 0.25s ease;
+}
+.mm-switch-row input[role="switch"]:checked {
+  background: #0f9488;
+}
+.mm-switch-row input[role="switch"]:checked::after {
+  transform: translateX(18px);
+}
+.mm-switch-row input[role="switch"]:focus-visible {
+  outline: 3px solid #14b8a688;
+  outline-offset: 2px;
+}
+.mm-badge-class {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #0f766e;
+  margin: 12px 0 2px;
+  font-weight: 600;
+}
+.mm-badge-evidence {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
