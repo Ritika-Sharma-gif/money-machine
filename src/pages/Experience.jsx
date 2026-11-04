@@ -47,6 +47,19 @@ export const deals = [
     paid: 0,
   },
 ];
+function tone(text = "") {
+  const t = text.toLowerCase();
+  if (/(in progress|active|agreed|earned in demo)/.test(t) && !/not /.test(t))
+    return "green";
+  if (/(changes requested|paused)/.test(t)) return "rose";
+  if (/(draft|not earned|planned)/.test(t)) return "grey";
+  return "amber";
+}
+function Status({ children }) {
+  const text = [].concat(children).join("");
+  return <span className={`mm-status ${tone(text)}`}>{children}</span>;
+}
+
 export function Modal({ title, onClose, children }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -241,7 +254,6 @@ function HowItWorks() {
     >
       <div className="mm-steps-head">
         <span className="mm-kicker">HOW IT WORKS</span>
-        <h2 id="how-title">Three simple steps.</h2>
         <button
           type="button"
           className="mm-quiet"
@@ -258,6 +270,7 @@ function HowItWorks() {
         >
           Replay ↻
         </button>
+        <h2 id="how-title">Three simple steps.</h2>
       </div>
       <div className="mm-steps-grid">
         <span className="mm-steps-line" aria-hidden="true">
@@ -292,7 +305,13 @@ const calm = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function Reveal({ children, className = "", delay = 0, as: Tag = "div" }) {
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  as: Tag = "div",
+  id,
+}) {
   const ref = useRef(null);
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -313,6 +332,7 @@ function Reveal({ children, className = "", delay = 0, as: Tag = "div" }) {
   return (
     <Tag
       ref={ref}
+      id={id}
       className={`mm-reveal ${shown ? "shown" : ""} ${className}`}
       style={{ "--d": `${delay}ms` }}
     >
@@ -573,6 +593,32 @@ export function Landing() {
           </div>
         </section>
         <HowItWorks />
+        <Reveal as="section" className="mm-principles" id="principles">
+          <div className="mm-principles-head">
+            <span className="mm-kicker">HOW WE KEEP IT HONEST</span>
+            <h2>Clear by design.</h2>
+          </div>
+          {[
+            [
+              "Money stays honest",
+              "Agreed, invoiced and recorded amounts are always shown separately. Self-reported is never called verified.",
+            ],
+            [
+              "You choose who finds you",
+              "Creator profiles are hidden from search until you switch discovery on. You can switch it off any time.",
+            ],
+            [
+              "Earnings stay private",
+              "Income and spending are visible only to their owner. They never appear on a public profile.",
+            ],
+          ].map(([t, d], n) => (
+            <article key={t} style={{ "--n": n }}>
+              <span className="mm-principle-no">0{n + 1}</span>
+              <h3>{t}</h3>
+              <p>{d}</p>
+            </article>
+          ))}
+        </Reveal>
         <section className="mm-role-section" id="choose-role">
           <div>
             <span className="mm-kicker">A PLACE FOR BOTH SIDES</span>
@@ -618,9 +664,34 @@ export function Landing() {
         </Reveal>
       </main>
       <footer className="mm-public-footer">
-        <Brand />
-        <span>Creator–business collaboration, made clearer.</span>
-        <small>Interactive demo · No real messages or payments</small>
+        <div className="mm-foot-main">
+          <div className="mm-foot-brand">
+            <Brand />
+            <p>
+              A calmer way for creators and businesses to find each other, agree
+              on the work and keep track of it.
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <h4>Explore</h4>
+            <Link to="/creator/dashboard">Creator workspace</Link>
+            <Link to="/business/dashboard">Business workspace</Link>
+            <Link to="/creator/discover">Discover people</Link>
+          </nav>
+          <nav aria-label="Product">
+            <h4>Product</h4>
+            <a href="#how-it-works">How it works</a>
+            <a href="#principles">Our principles</a>
+            <Link to="/creator/settings">Settings</Link>
+          </nav>
+        </div>
+        <div className="mm-foot-legal">
+          <span>© 2026 Money Machine · A VandLabs build</span>
+          <span>
+            Interactive demo. Profiles and figures are fictional; no messages
+            are sent and no payments are made.
+          </span>
+        </div>
       </footer>
     </div>
   );
@@ -769,7 +840,7 @@ function DealDetail({ deal, onClose }) {
       <p>
         <strong>{deal.creator}</strong> · Studio Fern
       </p>
-      <span className="mm-status">{deal.status}</span>
+      <Status>{deal.status}</Status>
       <p>
         Next step: {deal.task}
         <br />
@@ -873,11 +944,7 @@ export function Dashboard() {
                   {business ? d.creator : "Studio Fern"} · Due {d.deadline}
                 </small>
               </span>
-              <span
-                className={`mm-status ${d.status === "In progress" ? "green" : ""}`}
-              >
-                {d.status}
-              </span>
+              <Status>{d.status}</Status>
               <span>↗</span>
             </button>
           ))}
@@ -1054,7 +1121,7 @@ export function Collaborations() {
             <span className="mm-project-number">COLLABORATION / {d.id}</span>
             <h2>{d.title}</h2>
             <p>{d.creator} × Studio Fern</p>
-            <span className="mm-status">{d.status}</span>
+            <Status>{d.status}</Status>
             <div className="mm-project-footer">
               <span>
                 {d.task}
@@ -1281,7 +1348,7 @@ export function Affiliates() {
         {programs.map((p) => (
           <div className="mm-program" key={p.id}>
             <div>
-              <span className="mm-status">{p.status} · Demo</span>
+              <Status>{p.status} · Demo</Status>
               <h3>{p.name}</h3>
               <p>{p.description}</p>
               <small>
@@ -1450,9 +1517,7 @@ export function Badges() {
             <h2>{title}</h2>
             <p>{desc}</p>
             <small className="mm-badge-evidence">Evidence: {evidence}</small>
-            <span className="mm-status">
-              {earned ? "Earned in demo" : "Not earned yet"}
-            </span>
+            <Status>{earned ? "Earned in demo" : "Not earned yet"}</Status>
           </article>
         ))}
       </div>
@@ -1655,7 +1720,7 @@ export function SimplePage() {
               Scope: one short video and supporting caption. Next deadline:{" "}
               {d.deadline}.
             </p>
-            <span className="mm-status">Terms agreed · Demo</span>
+            <Status>Terms agreed · Demo</Status>
           </Panel>
         ))}
       </>
