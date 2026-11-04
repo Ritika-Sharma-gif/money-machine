@@ -189,7 +189,7 @@ a.mm-button:hover {
 .mm-image-label {
   position: absolute;
   z-index: 1;
-  bottom: 70px;
+  bottom: 120px;
   left: 35px;
   color: #fff;
   letter-spacing: 2px;
