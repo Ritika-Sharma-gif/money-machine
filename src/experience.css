@@ -1831,3 +1831,312 @@ a.mm-button:hover {
   font-size: 12px;
   margin-bottom: 12px;
 }
+
+/* ---------- Home page: interactive motion ---------- */
+.mm-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 70;
+  pointer-events: none;
+}
+.mm-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #14b8a6, #3b82f6, #14b8a6);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.mm-public-nav {
+  transition:
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+}
+.mm-public-nav.scrolled {
+  box-shadow: 0 8px 28px -14px #142b4a40;
+}
+/* reveal on scroll */
+.mm-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s ease var(--d, 0ms),
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms);
+}
+.mm-reveal.shown {
+  opacity: 1;
+  transform: none;
+}
+/* hero glow */
+.mm-hero {
+  position: relative;
+}
+.mm-glow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+.mm-glow i {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.45;
+}
+.mm-glow i:first-child {
+  width: 420px;
+  height: 420px;
+  right: 8%;
+  top: 6%;
+  background: #14b8a6;
+  animation: mm-drift 14s ease-in-out infinite;
+}
+.mm-glow i:last-child {
+  width: 360px;
+  height: 360px;
+  left: 4%;
+  bottom: 0;
+  background: #93c5fd;
+  animation: mm-drift 18s ease-in-out infinite reverse;
+}
+@keyframes mm-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.12); }
+}
+/* headline word rise */
+.mm-hero h1 .mm-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+.mm-hero h1 .mm-word {
+  display: inline-block;
+  animation: mm-word-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--w) * 90ms + 150ms);
+}
+@keyframes mm-word-up {
+  from { transform: translateY(105%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+/* hero parallax */
+.mm-hero-visual {
+  --px: 0px;
+  --py: 0px;
+}
+.mm-hero-visual > img {
+  transform: translate(calc(var(--px) * -0.6), calc(var(--py) * -0.6)) scale(1.06);
+  transition: transform 0.4s ease-out;
+}
+.mm-image-label {
+  transform: translate(calc(var(--px) * 0.5), calc(var(--py) * 0.5));
+  transition: transform 0.4s ease-out;
+}
+/* journey card */
+.mm-float {
+  min-width: 330px;
+  transform: translate(calc(var(--px) * 1.2), calc(var(--py) * 1.2));
+}
+.mm-float-body {
+  display: grid;
+  gap: 6px;
+}
+.mm-float-text {
+  display: grid;
+  gap: 6px;
+  animation: mm-swap 0.5s ease both;
+}
+@keyframes mm-swap {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.mm-float-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.mm-float-dots button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+.mm-float-dots button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 4px;
+  border-radius: 4px;
+  background: #cbd5e1;
+  transition: background 0.3s ease;
+}
+.mm-float-dots button.on::before {
+  background: #14b8a6;
+}
+.mm-float-dots button.done::before {
+  background: #142b4a;
+}
+.mm-float-dots button:focus-visible {
+  outline: 2px solid #14b8a6;
+  outline-offset: 1px;
+}
+/* role cards: spotlight + tilt */
+.mm-role-card {
+  --mx: 50%;
+  --my: 50%;
+  --rx: 0deg;
+  --ry: 0deg;
+  position: relative;
+  overflow: hidden;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition:
+    transform 0.25s ease-out,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+.mm-role-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    300px circle at var(--mx) var(--my),
+    #14b8a626,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.mm-role-card:hover,
+.mm-role-card:focus-visible {
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry))
+    translateY(-5px);
+  border-color: #14b8a6;
+  box-shadow: 0 18px 40px -18px #14b8a688;
+}
+.mm-role-card:hover::before,
+.mm-role-card:focus-visible::before {
+  opacity: 1;
+}
+.mm-role-card strong {
+  transition: transform 0.25s ease;
+}
+.mm-role-card:hover strong {
+  transform: translateX(6px);
+}
+/* phone mock-up */
+.mm-phone-art {
+  flex-shrink: 0;
+  padding-right: 30px;
+}
+.mm-phone-body {
+  position: relative;
+  width: 108px;
+  height: 168px;
+  border: 3px solid #142b4a;
+  border-radius: 22px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 26px 14px 14px;
+  align-content: start;
+  animation: mm-float 5s ease-in-out infinite;
+}
+.mm-phone-body::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 28px;
+  height: 4px;
+  border-radius: 4px;
+  background: #cbd5e1;
+  transform: translateX(-50%);
+}
+.mm-phone-body i {
+  height: 28px;
+  border-radius: 8px;
+  background: #dbe7f3;
+}
+.mm-phone-body i.p2 { background: #c8efe9; }
+.mm-phone-body b {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #142b4a;
+  color: #fff;
+  font: italic 700 14px Georgia, serif;
+  display: grid;
+  place-items: center;
+  animation: mm-drop 4s ease-in-out infinite;
+}
+@keyframes mm-drop {
+  0%, 15% { transform: translateY(-90px) scale(1.3); opacity: 0; }
+  35%, 85% { transform: none; opacity: 1; }
+  100% { transform: none; opacity: 0; }
+}
+@media (max-width: 650px) {
+  .mm-phone-art {
+    display: none;
+  }
+  .mm-float {
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .mm-hero h1 .mm-word {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .mm-role-card,
+  .mm-role-card:hover {
+    transform: none !important;
+  }
+  .mm-phone-body b {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Journey card layout fixes */
+.mm-float .mm-float-dots {
+  display: flex;
+  gap: 6px;
+}
+.mm-float {
+  z-index: 5;
+  align-items: flex-start;
+}
+.mm-image-label {
+  bottom: 250px;
+}
+@media (max-width: 650px) {
+  .mm-image-label {
+    bottom: 235px;
+  }
+}
+.mm-hero-photo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 24px;
+}
+.mm-hero-photo > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

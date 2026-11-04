@@ -288,13 +288,183 @@ function HowItWorks() {
   );
 }
 
+const calm = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function Reveal({ children, className = "", delay = 0, as: Tag = "div" }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return setShown(true);
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag
+      ref={ref}
+      className={`mm-reveal ${shown ? "shown" : ""} ${className}`}
+      style={{ "--d": `${delay}ms` }}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+const journey = [
+  {
+    step: "DISCOVER",
+    title: "Maya × Studio Fern",
+    line: "Two profiles. One good fit.",
+  },
+  {
+    step: "AGREE",
+    title: "Terms in one place",
+    line: "Scope, timing and fee, written down.",
+  },
+  {
+    step: "DELIVER",
+    title: "First video shared",
+    line: "Review it and send your thoughts.",
+  },
+  {
+    step: "REPEAT",
+    title: "Ready for round two",
+    line: "Work together again, faster.",
+  },
+];
+
+function JourneyCard() {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (paused || calm()) return;
+    const t = setInterval(() => setI((n) => (n + 1) % journey.length), 3200);
+    return () => clearInterval(t);
+  }, [paused]);
+  const item = journey[i];
+  return (
+    <div
+      className="mm-float"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <span className="mm-avatar">MK</span>
+      <div className="mm-float-body">
+        <div key={i} className="mm-float-text">
+          <small>
+            ILLUSTRATIVE · STEP {i + 1} OF 4 · {item.step}
+          </small>
+          <strong>{item.title}</strong>
+          <span>{item.line}</span>
+        </div>
+        <div
+          className="mm-float-dots"
+          role="group"
+          aria-label="Collaboration steps"
+        >
+          {journey.map((j, n) => (
+            <button
+              key={j.step}
+              type="button"
+              className={n === i ? "on" : n < i ? "done" : ""}
+              aria-label={`Show step ${n + 1}: ${j.step}`}
+              aria-current={n === i}
+              onClick={() => setI(n)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoleCard({ to, className = "", label, title, text, cta, delay }) {
+  function move(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    e.currentTarget.style.setProperty("--mx", `${x * 100}%`);
+    e.currentTarget.style.setProperty("--my", `${y * 100}%`);
+    if (!calm()) {
+      e.currentTarget.style.setProperty("--rx", `${(0.5 - y) * 6}deg`);
+      e.currentTarget.style.setProperty("--ry", `${(x - 0.5) * 8}deg`);
+    }
+  }
+  function leave(e) {
+    e.currentTarget.style.setProperty("--rx", "0deg");
+    e.currentTarget.style.setProperty("--ry", "0deg");
+  }
+  return (
+    <Reveal delay={delay} className="mm-role-wrap">
+      <Link
+        to={to}
+        className={`mm-role-card ${className}`}
+        onMouseMove={move}
+        onMouseLeave={leave}
+      >
+        <span>{label}</span>
+        <h3>{title}</h3>
+        <p>{text}</p>
+        <strong>{cta}</strong>
+      </Link>
+    </Reveal>
+  );
+}
+
 export function Landing() {
+  const [scrolled, setScrolled] = useState(false);
+  const progress = useRef(null);
+  const visual = useRef(null);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        if (progress.current)
+          progress.current.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+        setScrolled(scrollY > 12);
+      });
+    };
+    onScroll();
+    addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  function parallax(e) {
+    if (calm() || !visual.current) return;
+    const r = visual.current.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    visual.current.style.setProperty("--px", `${x * 16}px`);
+    visual.current.style.setProperty("--py", `${y * 12}px`);
+  }
+  function parallaxEnd() {
+    visual.current?.style.setProperty("--px", "0px");
+    visual.current?.style.setProperty("--py", "0px");
+  }
   useEffect(() => {
     document.title = "Money Machine — Good work starts with a connection";
   }, []);
   return (
     <div className="mm-landing">
-      <header className="mm-public-nav">
+      <span className="mm-progress" aria-hidden="true">
+        <span ref={progress} />
+      </span>
+      <header className={`mm-public-nav ${scrolled ? "scrolled" : ""}`}>
         <Link to="/" aria-label="Money Machine home">
           <Brand />
         </Link>
@@ -334,14 +504,31 @@ export function Landing() {
       </header>
       <main>
         <section className="mm-hero">
+          <div className="mm-glow" aria-hidden="true">
+            <i />
+            <i />
+          </div>
           <div className="mm-hero-copy">
             <span className="mm-kicker">GOOD PEOPLE. GREAT POSSIBILITIES.</span>
-            <h1>
-              Your next great
-              <br />
-              collaboration
-              <br />
-              starts <em>here.</em>
+            <h1 aria-label="Your next great collaboration starts here.">
+              {["Your next great", "collaboration", "starts"].map((line, l) => (
+                <span className="mm-line" key={line} aria-hidden="true">
+                  {line.split(" ").map((w, k) => (
+                    <span
+                      className="mm-word"
+                      key={w + k}
+                      style={{ "--w": `${l * 3 + k}` }}
+                    >
+                      {w}&nbsp;
+                    </span>
+                  ))}
+                </span>
+              ))}
+              <span className="mm-line" aria-hidden="true">
+                <span className="mm-word" style={{ "--w": 7 }}>
+                  <em>here.</em>
+                </span>
+              </span>
             </h1>
             <p>
               Meet the right people. Make something together.
@@ -363,25 +550,25 @@ export function Landing() {
               A space for creators and businesses to work together.
             </p>
           </div>
-          <div className="mm-hero-visual">
-            <img
-              src="/images/creator-studio.webp"
-              alt="A photographer working with a camera"
-              fetchPriority="high"
-            />
+          <div
+            className="mm-hero-visual"
+            ref={visual}
+            onMouseMove={parallax}
+            onMouseLeave={parallaxEnd}
+          >
+            <div className="mm-hero-photo">
+              <img
+                src="/images/creator-studio.webp"
+                alt="A photographer working with a camera"
+                fetchPriority="high"
+              />
+            </div>
             <div className="mm-image-label">
               FROM AN IDEA
               <br />
               <strong>to something real.</strong>
             </div>
-            <div className="mm-float">
-              <span className="mm-avatar">MK</span>
-              <div>
-                <small>ILLUSTRATIVE COLLABORATION</small>
-                <strong>Maya × Studio Fern</strong>
-                <span>One story. Two perspectives.</span>
-              </div>
-            </div>
+            <JourneyCard />
             <div className="mm-visual-tag">Create. Connect. Collaborate.</div>
           </div>
         </section>
@@ -392,29 +579,43 @@ export function Landing() {
             <h2>What brings you here?</h2>
             <p>Choose a demo workspace. You can switch roles at any time.</p>
           </div>
-          <Link to="/creator/dashboard" className="mm-role-card">
-            <span>FOR CREATORS</span>
-            <h3>Make your next move.</h3>
-            <p>Find businesses, manage your work, and track your income.</p>
-            <strong>Explore creator workspace ↗</strong>
-          </Link>
-          <Link to="/business/dashboard" className="mm-role-card business">
-            <span>FOR BUSINESSES</span>
-            <h3>Find your next voice.</h3>
-            <p>Meet creators, manage affiliate programs, and track spending.</p>
-            <strong>Explore business workspace ↗</strong>
-          </Link>
+          <RoleCard
+            to="/creator/dashboard"
+            label="FOR CREATORS"
+            title="Make your next move."
+            text="Find businesses, manage your work, and track your income."
+            cta="Explore creator workspace ↗"
+            delay={0}
+          />
+          <RoleCard
+            to="/business/dashboard"
+            className="business"
+            label="FOR BUSINESSES"
+            title="Find your next voice."
+            text="Meet creators, manage affiliate programs, and track spending."
+            cta="Explore business workspace ↗"
+            delay={140}
+          />
         </section>
-        <section className="mm-phone">
+        <Reveal as="section" className="mm-phone">
           <div>
             <span className="mm-kicker">WHEREVER WORK TAKES YOU</span>
             <h2>Your workspace. One tap away.</h2>
             <p>
               Add Money Machine to your phone’s home screen for easy access.
             </p>
+            <InstallButton />
           </div>
-          <InstallButton />
-        </section>
+          <div className="mm-phone-art" aria-hidden="true">
+            <div className="mm-phone-body">
+              <i className="p1" />
+              <i className="p2" />
+              <i className="p3" />
+              <i className="p4" />
+              <b>m.</b>
+            </div>
+          </div>
+        </Reveal>
       </main>
       <footer className="mm-public-footer">
         <Brand />
