@@ -1467,3 +1467,27 @@ a.mm-button:hover {
     transform: none;
   }
 }
+
+/* Review fixes: nested discovery skip link sits inside the animated content
+   (transform makes position:fixed relative to it), so it showed over the topbar.
+   The workspace provides its own skip link instead. */
+.mm-workspace .social-app > .skip-link {
+  display: none;
+}
+.mm-workspace > .skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 60;
+}
+.mm-workspace > .skip-link:focus {
+  top: 12px;
+}
+.mm-hero > * {
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  .mm-hero h1 {
+    font-size: 40px;
+  }
+}

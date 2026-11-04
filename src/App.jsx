@@ -169,7 +169,7 @@ function SocialApp() {
         Interactive prototype · Fictional profiles & sample work · Nothing is
         sent or paid
       </div>
-      <main
+      <div
         id="social-main"
         className="social-main"
         ref={mainRef}
@@ -269,7 +269,7 @@ function SocialApp() {
             require consent.
           </small>
         </footer>
-      </main>
+      </div>
       <nav className="social-bottom" aria-label="Mobile navigation">
         <NavLink to={`${base}/discover`}>
           <Compass size={22} />

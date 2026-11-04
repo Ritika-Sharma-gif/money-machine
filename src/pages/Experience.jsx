@@ -316,6 +316,16 @@ export function Workspace({ children }) {
   const business = role === "business";
   return (
     <div className="mm-workspace">
+      <a
+        className="skip-link"
+        href="#mm-main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("mm-main")?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <aside className={`mm-sidebar ${open ? "open" : ""}`}>
         <Link to="/" aria-label="Money Machine home">
           <Brand />
@@ -382,7 +392,12 @@ export function Workspace({ children }) {
           <span className="mm-demo-dot" />
           Demo workspace <span>Sample data · Nothing is sent or paid</span>
         </div>
-        <main className="mm-content" key={location.pathname}>
+        <main
+          id="mm-main"
+          tabIndex="-1"
+          className="mm-content"
+          key={location.pathname}
+        >
           {children}
         </main>
       </div>
