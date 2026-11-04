@@ -1491,3 +1491,7 @@ a.mm-button:hover {
     font-size: 40px;
   }
 }
+/* Decorative status dots removed on request. */
+.mm-timeline p:before {
+  display: none;
+}

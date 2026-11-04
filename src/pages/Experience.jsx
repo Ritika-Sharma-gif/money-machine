@@ -389,7 +389,6 @@ export function Workspace({ children }) {
           </div>
         </header>
         <div className="mm-demo-note">
-          <span className="mm-demo-dot" />
           Demo workspace <span>Sample data · Nothing is sent or paid</span>
         </div>
         <main
@@ -568,7 +567,6 @@ export function Dashboard() {
               key={title}
               onClick={() => setSelected(d)}
             >
-              <span className="mm-task-dot" />
               <span>
                 <strong>{title}</strong>
                 <small>{sub}</small>
