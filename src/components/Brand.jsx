@@ -1,9 +1,10 @@
-import { Blocks } from "lucide-react";
 export default function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark">
-        <Blocks size={23} />
+        <span aria-hidden="true" className="mm-monogram">
+          m.
+        </span>
       </span>
       <span>
         money<span className="brand-light">machine</span>

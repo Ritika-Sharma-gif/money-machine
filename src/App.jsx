@@ -1,3 +1,13 @@
+import {
+  Landing,
+  Workspace,
+  Dashboard,
+  Collaborations,
+  FinancialRecords,
+  Affiliates,
+  Badges,
+  SimplePage,
+} from "./pages/Experience";
 import { Discovery } from "./pages/Discovery";
 import { Profile } from "./pages/PublicProfile";
 import { RequestDialog } from "./components/RequestDialog";
@@ -302,7 +312,7 @@ function Missing() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/creator/discover" replace />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/:role/overview" element={<OldOverview />} />
       <Route path="/:role/people/:id" element={<RoleApp />} />
       <Route path="/:role/:page" element={<RoleApp />} />
@@ -312,10 +322,22 @@ export default function App() {
 }
 function OldOverview() {
   const { role } = useParams();
-  return <Navigate to={`/${role}/discover`} replace />;
+  return <Navigate to={`/${role}/dashboard`} replace />;
 }
 
 function RoleApp() {
-  const { role } = useParams();
-  return <SocialApp key={role} />;
+  const { role, page } = useParams();
+  if (!["creator", "business"].includes(role)) return <Missing />;
+  const pages = {
+    dashboard: <Dashboard />,
+    collaborations: <Collaborations />,
+    finances: <FinancialRecords />,
+    badges: <Badges />,
+    messages: <SimplePage />,
+    agreements: <SimplePage />,
+    profile: <SimplePage />,
+    settings: <SimplePage />,
+  };
+  if (role === "business") pages.affiliate = <Affiliates />;
+  return <Workspace>{pages[page] || <SocialApp key={role} />}</Workspace>;
 }
